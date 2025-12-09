@@ -1,0 +1,957 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Configuration File for DeepSKA",
+  "type": "object",
+  "properties": {
+    "reaction_network_config": {
+      "description": "Dictionary for configuring the reaction network.",
+      "type": "object",
+      "properties": {
+        "trajectories_dir": {
+          "description": "Directory for saving/loading the trajectory files.",
+          "type": "string"
+        },
+        "results_dir": {
+          "description": "Directory for saving the results files.",
+          "type": "string"
+        },
+        "reaction_network": {
+          "description": "Class name of the reaction network example to use.",
+          "type": "string",
+          "enum": [
+            "ConstitutiveGeneExpression",
+            "SelfRegulatoryGeneExpression",
+            "GeneticToggleSwitch",
+            "SusceptibleInfectedRecoveredNetwork",
+            "ReferenceBasedAntitheticIntegralController",
+            "SensorBasedAntitheticIntegralController",
+            "Repressilator",
+            "NonlinearConversionCascade",
+            "LinearConversionCascadeWithFeedback"
+          ]
+        },
+        "reaction_network_abbreviation": {
+          "description": "Abbreviation of the reaction network to use in file names and logging.",
+          "type": "string"
+        },
+        "n_species": {
+          "description": "Number of species in the reaction network. Not used by most reaction networks.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "parameter_dict": {
+          "description": "Dictionary of reaction network parameters and their values.",
+          "type": "object",
+          "additionalProperties": {
+            "description": "Parameter name and non-negative value.",
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "out_species_labels": {
+          "description": "List of species labels to be used by the output function.",
+          "type": "array",
+          "items": {
+            "description": "Label of the species to be used by the output function.",
+            "type": "string"
+          }
+        },
+        "output_function": {
+          "description": "Name of the output function to use.",
+          "type": "string",
+          "enum": [
+            "monomials"
+          ]
+        },
+        "output_function_arguments": {
+          "description": "Arguments used by the available output functions.",
+          "type": "object",
+          "properties": {
+            "monomial_orders": {
+              "description": "Powers to use in ascending order when using the monomials output function, e.g., [1] for the first moment or [1, 2] for first and second moment. Roots can be specified as well.",
+              "type": "array",
+              "items": {
+                "description": "Power used by the monomials output function.",
+                "type": "number"
+              }
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "monomial_orders"
+          ]
+        },
+        "exact_values_computable": {
+          "description": "Boolean flag indicating if an exact solution for the reaction network is available.",
+          "type": "boolean"
+        },
+        "sel_param_labels": {
+          "description": "List of potential reaction network parameters of interest. Serves as a placeholder for potential downstream analysis.",
+          "type": "array",
+          "items": {
+            "description": "Name of the given parameter of interest.",
+            "type": "string"
+          }
+        },
+        "t_stop": {
+          "description": "Final time of the training trajectories simulation.",
+          "type": "number",
+          "minimum": 0
+        },
+        "n_time_samples": {
+          "description": "Number of time samples (grid points) used for the training trajectories.",
+          "type": "integer",
+          "minimum": 2
+        },
+        "init_type": {
+          "description": "How the initial state of the reaction network is set. Only used during training. Can be either 'deter' for deterministic (usually a predefined zero state) or 'uniform' for uniform sampling between lower and upper bounds.",
+          "type": "string",
+          "enum": [
+            "deter",
+            "uniform"
+          ]
+        },
+        "lower_bound": {
+          "description": "Lower bound used for uniform sampling of the initial state of the reaction network. Can be a single integer or a list of integers with a length of n_species.",
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "array",
+              "items": {
+                "description": "Lower bound of the initial state of the reaction network for the given species.",
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          ]
+        },
+        "upper_bound": {
+          "description": "Upper bound used for uniform sampling of the initial state of the reaction network. Can be a single integer or a list of integers with a length of n_species.",
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "array",
+              "items": {
+                "description": "Upper bound of the initial state of the reaction network for the given species.",
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "trajectories_dir",
+        "results_dir",
+        "reaction_network",
+        "reaction_network_abbreviation",
+        "parameter_dict",
+        "out_species_labels",
+        "output_function",
+        "output_function_arguments",
+        "exact_values_computable",
+        "sel_param_labels",
+        "t_stop",
+        "n_time_samples",
+        "init_type",
+        "lower_bound",
+        "upper_bound"
+      ]
+    },
+    "neural_network_config": {
+      "description": "Dictionary for all settings related to the neural network and model training.",
+      "type": "object",
+      "properties": {
+        "training_seed": {
+          "description": "Random seed used by numpy during training.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "torch_seed": {
+          "description": "Random seed used by torch during training.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "use_previous_training_weights": {
+          "description": "Boolean setting if the model should be initialized with weights from a previous run and starting training from there. Uses the trained_model_timestamp or trained_model_path for reading the model weights.",
+          "type": "boolean"
+        },
+        "trained_model_timestamp": {
+          "description": "Timestamp of the trained model to be used for loading the model weights.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}_\\d{2}-\\d{2}-\\d{2}$"
+        },
+        "trained_model_path": {
+          "description": "Optional path to a trained model file to load the model weights from. If provided, this path overrides the trained_model_timestamp setting.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "training_history_path": {
+          "description": "Optional path to a training history file to load the training history from. If provided, this path overrides the default training history path derived from the trained_model_timestamp.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "model_training_needed": {
+          "description": "Boolean flag indicating if the model should be trained. Otherwise, the model is loaded using the trained_model_timestamp or a combination of trained_model_path and training_history_path.",
+          "type": "boolean"
+        },
+        "v": {
+          "description": "Dictionary of all V-specific parameters.",
+          "type": "object",
+          "properties": {
+            "as_relationship": {
+              "description": "Which almost sure relationship to use for learning V.",
+              "type": "string",
+              "enum": [
+                "identity",
+                "logarithm"
+              ]
+            },
+            "single_pred_term": {
+              "description": "If set to true, only the full interval is used for computing the neural network prediction. Otherwise, each subinterval is used as well.",
+              "type": "boolean"
+            },
+            "exact_time_derivative": {
+              "description": "If set to true, the exact time derivative using torch.nn.functional.jacobian is computed for the PINN loss. Otherwise, the difference quotient is used.",
+              "type": "boolean"
+            },
+            "square_pinn_once": {
+              "description": "If set to true, the PINN loss is squared once before computing the final loss. Otherwise, each term is squared individually.",
+              "type": "boolean"
+            },
+            "loss_function": {
+              "description": "Loss function to use for training. Only considered with the identity relationship.",
+              "type": "string",
+              "enum": [
+                "identity_loss",
+                "pinn_loss",
+                "id_pinn_loss"
+              ]
+            },
+            "loss_component_weights": {
+              "description": "Weights/multipliers of the loss components. Only considered with the identity relationship and if there are multiple loss components, such as in id_pinn_loss.",
+              "type": "array",
+              "items": {
+                "description": "Weight of the given loss component.",
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "adaptive_weights": {
+              "description": "If set to true, the loss component weights are adapted during training.",
+              "type": "boolean"
+            },
+            "update_rate": {
+              "description": "Update rate for the adaptive weights. Only considered if adaptive_weights is set to true.",
+              "type": "number",
+              "minimum": 0
+            },
+            "normalization": {
+              "description": "Normalization approach used for the expectation delta.",
+              "type": "string",
+              "enum": [
+                "none",
+                "ergodic_mean",
+                "mean_full",
+                "mean_batch",
+                "mean_std_full",
+                "mean_std_batch"
+              ]
+            },
+            "inner_loss": {
+              "description": "Inner loss function (or normalization approach) which changes how the delta is computed. If a list is provided, the inner_loss_change_index is used to switch between the two inner losses after a certain number of training steps.",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "manhattan",
+                    "euclidean",
+                    "huber",
+                    "inverse_huber"
+                  ]
+                },
+                {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "description": "Inner loss function to use.",
+                    "type": "string",
+                    "enum": [
+                      "manhattan",
+                      "euclidean",
+                      "huber",
+                      "inverse_huber"
+                    ]
+                  }
+                }
+              ]
+            },
+            "inner_loss_change_index": {
+              "description": "Index of the training step after which the inner loss is changed. Only considered if inner_loss is a list.",
+              "type": "integer",
+              "minimum": 1
+            },
+            "use_early_stopping": {
+              "description": "Boolean flag indicating if early stopping of the training should be used.",
+              "type": "boolean"
+            },
+            "use_analysis_subnet_for_early_stopping": {
+              "description": "Boolean flag indicating if the analysis subnet should be used for computing the early stopping criterion.",
+              "type": "boolean"
+            },
+            "early_stopping_batch_size": {
+              "description": "Batch size used for early stopping evaluation.",
+              "type": "integer",
+              "minimum": 1
+            },
+            "early_stopping_threshold": {
+              "description": "Threshold for early stopping criteria.",
+              "type": "number",
+              "minimum": 0
+            },
+            "early_stopping_count": {
+              "description": "Number of consecutive evaluations below threshold needed to trigger early stopping.",
+              "type": "integer",
+              "minimum": 1
+            },
+            "early_stopping_fraction": {
+              "description": "Fraction of the validation set that needs to be below the threshold for the count of successful evaluations to increase.",
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "use_exact_eigenfunctions": {
+              "description": "If set to true, the exact eigenfunctions are used for the spectral architectures and only the decay modes are learned. This only works for specific reaction network examples.",
+              "type": "boolean"
+            },
+            "only_train_func_dependence": {
+              "description": "If set to true, only the function coordinates are retrained. This only works with the spectral architectures.",
+              "type": "boolean"
+            },
+            "forward_subnets": {
+              "description": "Whether to use shared or distinct forward subnets for computing V and dV.",
+              "type": "string",
+              "enum": [
+                "shared",
+                "distinct"
+              ]
+            },
+            "analysis_subnets": {
+              "description": "Whether to use shared or distinct subnets during analysis.",
+              "type": "string",
+              "enum": [
+                "shared",
+                "distinct"
+              ]
+            },
+            "subnet_architecture": {
+              "description": "Subnetwork architecture to use for computing V (and potentially dV).",
+              "type": "string",
+              "enum": [
+                "naive",
+                "features",
+                "spectral_matched_lumped",
+                "spectral_matched_simplified",
+                "spectral_matched_full",
+                "spectral_complex"
+              ]
+            },
+            "n_temporal_features": {
+              "description": "Number of temporal features, only used by the 'features' architecture.",
+              "type": "integer",
+              "minimum": 1
+            },
+            "n_spectral_terms": {
+              "description": "Number of spectral terms, only used by the spectral architectures.",
+              "type": "integer",
+              "minimum": 1
+            },
+            "stationary_mean_initialization": {
+              "description": "How to initialize the stationary mean of the spectral architectures. If 'exact' is set and not available, it will fall back to the ergodic 'estimate'.",
+              "type": "string",
+              "enum": [
+                "zeros",
+                "ones",
+                "rand",
+                "estimate_trainable",
+                "exact_trainable",
+                "estimate",
+                "exact"
+              ]
+            },
+            "erg_t_min": {
+              "description": "Minimum time used for estimating the stationary mean of the spectral architectures.",
+              "type": "number",
+              "minimum": 0
+            },
+            "erg_t_max": {
+              "description": "Maximum time used for estimating the stationary mean of the spectral architectures.",
+              "type": "number",
+              "minimum": 0
+            },
+            "erg_n_trajectories": {
+              "description": "Number of trajectories used for estimating the stationary mean of the spectral architectures. Relevant for providing confidence intervals of the estimate.",
+              "type": "integer",
+              "minimum": 1
+            },
+            "decay_modes_initialization": {
+              "description": "How to initialize the decay modes of the spectral architectures. Uses the provided decay_modes_real and decay_modes_imag if set to [fixed, trainable].",
+              "type": "string",
+              "enum": [
+                "rand",
+                "fixed",
+                "trainable"
+              ]
+            },
+            "decay_modes_real": {
+              "description": "Real part of the decay modes of the spectral architectures. Only used if decay_modes_initialization is set to [fixed, trainable]. Provide your real decay modes with length n_spectral_terms here.",
+              "type": "array",
+              "items": {
+                "description": "Real part of the decay mode of the given spectral term.",
+                "type": "number"
+              }
+            },
+            "decay_modes_imag": {
+              "description": "Imaginary part of the decay modes of the spectral architectures. Only used if decay_modes_initialization is set to [fixed, trainable]. Provide your imaginary decay modes with length n_spectral_terms here.",
+              "type": "array",
+              "items": {
+                "description": "Imaginary part of the decay mode of the given spectral term.",
+                "type": "number"
+              }
+            },
+            "pairing_mode": {
+              "description": "Sets if decay modes are treated as conjugate pairs when using the 'spectral_complex' architecture.",
+              "type": "string",
+              "enum": [
+                "paired",
+                "unconstrained"
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "as_relationship",
+            "single_pred_term",
+            "exact_time_derivative",
+            "square_pinn_once",
+            "loss_function",
+            "loss_component_weights",
+            "adaptive_weights",
+            "update_rate",
+            "normalization",
+            "inner_loss",
+            "inner_loss_change_index",
+            "use_early_stopping",
+            "use_analysis_subnet_for_early_stopping",
+            "early_stopping_batch_size",
+            "early_stopping_threshold",
+            "early_stopping_count",
+            "early_stopping_fraction",
+            "use_exact_eigenfunctions",
+            "only_train_func_dependence",
+            "forward_subnets",
+            "analysis_subnets",
+            "subnet_architecture",
+            "n_temporal_features",
+            "n_spectral_terms",
+            "stationary_mean_initialization",
+            "erg_t_min",
+            "erg_t_max",
+            "erg_n_trajectories",
+            "decay_modes_initialization",
+            "decay_modes_real",
+            "decay_modes_imag",
+            "pairing_mode"
+          ]
+        },
+        "train_samples_needed": {
+          "description": "Boolean flag indicating if training samples are needed. If set to false, the data is read from the trajectories_dir.",
+          "type": "boolean"
+        },
+        "valid_samples_needed": {
+          "description": "Boolean flag indicating if validation samples are needed. If set to false, the data is read from the trajectories_dir.",
+          "type": "boolean"
+        },
+        "use_ssa_samples": {
+          "description": "Boolean flag indicating if SSA samples should be used for training and validation. If set to false, constant trajectories are used.",
+          "type": "boolean"
+        },
+        "resample_during_training": {
+          "description": "Boolean flag to set resampling strategies for the constant trajectories.",
+          "type": "boolean"
+        },
+        "resampling_frequency": {
+          "description": "Every resampling_frequency steps, new trajectory data is created. The setting is used for the constant trajectories.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "train_size": {
+          "description": "Size of the training data set (number of trajectories).",
+          "type": "integer",
+          "minimum": 1
+        },
+        "valid_size": {
+          "description": "Size of the validation data set (number of trajectories).",
+          "type": "integer",
+          "minimum": 1
+        },
+        "save_train_data": {
+          "description": "Boolean flag indicating if the training data should be saved to disc.",
+          "type": "boolean"
+        },
+        "save_valid_data": {
+          "description": "Boolean flag indicating if the validation data should be saved to disc.",
+          "type": "boolean"
+        },
+        "use_is_resampling": {
+          "description": "Generate new DeepIS training and validation data after a given step to use for further optimization.",
+          "type": "boolean"
+        },
+        "is_resampling_start": {
+          "description": "Start step of the DeepIS resampling. This is where the loss function is changed and new training and validation data is generated for the first time.",
+          "type": "integer"
+        },
+        "is_resampling_frequency": {
+          "description": "Every is_resampling_frequency steps, new DeepIS trajectory data is created using the updated neural network.",
+          "type": "integer"
+        },
+        "is_resampling_train_size": {
+          "description": "Number of training samples to use for the resampling.",
+          "type": "integer"
+        },
+        "is_resampling_valid_size": {
+          "description": "Number of validation samples to use for the resampling.",
+          "type": "integer"
+        },
+        "lr": {
+          "description": "Initial learning rate for training.",
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "lr_scheduler": {
+          "description": "Type of learning rate scheduler to use.",
+          "type": "string",
+          "enum": [
+            "constant",
+            "cosine"
+          ]
+        },
+        "n_steps": {
+          "description": "Maximum number of training steps to take (can be fewer if early stopping is used). This corresponds to the total number of backward passes (not forward passes).",
+          "type": "integer",
+          "minimum": 1
+        },
+        "use_mini_batches": {
+          "description": "Boolean flag indicating if mini-batches should be used for training.",
+          "type": "boolean"
+        },
+        "use_full_length_trajectories": {
+          "description": "Boolean flag indicating if full length trajectories should be used (instead of randomly varying the time window size and position). Only relevant if use_mini_batches is set to true.",
+          "type": "boolean"
+        },
+        "mini_batch_size": {
+          "description": "Size of mini-batches used for training. The mini-batch size needs to be provided as n_trajectories * n_time_samples.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "backward_frequency": {
+          "description": "Frequency of backward passes during training. Means that only one backward pass is done for every backward_frequency forward passes.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "logging_frequency": {
+          "description": "Frequency of logging during training.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "n_nodes_per_layer": {
+          "description": "Number of nodes per layer in the subnet.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "n_hidden_layers": {
+          "description": "Number of hidden layers in the subnet.",
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "training_seed",
+        "torch_seed",
+        "use_previous_training_weights",
+        "trained_model_timestamp",
+        "trained_model_path",
+        "training_history_path",
+        "model_training_needed",
+        "v",
+        "train_samples_needed",
+        "valid_samples_needed",
+        "use_ssa_samples",
+        "resample_during_training",
+        "resampling_frequency",
+        "train_size",
+        "valid_size",
+        "save_train_data",
+        "save_valid_data",
+        "use_is_resampling",
+        "is_resampling_start",
+        "is_resampling_frequency",
+        "is_resampling_train_size",
+        "is_resampling_valid_size",
+        "lr",
+        "lr_scheduler",
+        "n_steps",
+        "use_mini_batches",
+        "use_full_length_trajectories",
+        "mini_batch_size",
+        "backward_frequency",
+        "logging_frequency",
+        "n_nodes_per_layer",
+        "n_hidden_layers"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "model_training_needed": {
+                "const": false
+              }
+            }
+          },
+          "then": {
+            "oneOf": [
+              {
+                "description": "Load using timestamp-based results directory.",
+                "properties": {
+                  "trained_model_timestamp": {
+                    "type": "string"
+                  },
+                  "trained_model_path": {
+                    "type": "null"
+                  },
+                  "training_history_path": {
+                    "type": "null"
+                  }
+                }
+              },
+              {
+                "description": "Load using explicit model and history paths.",
+                "properties": {
+                  "trained_model_timestamp": {
+                    "type": "null"
+                  },
+                  "trained_model_path": {
+                    "type": "string"
+                  },
+                  "training_history_path": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "validation_config": {
+      "description": "Dictionary for configuring simulation and validation settings.",
+      "type": "object",
+      "properties": {
+        "analysis_seed": {
+          "description": "Random seed used for analysis.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "run_test_state_analysis": {
+          "description": "Boolean flag indicating if the test state analysis should be run.",
+          "type": "boolean"
+        },
+        "t_stop": {
+          "description": "Final time of the validation simulation.",
+          "type": "number",
+          "minimum": 0
+        },
+        "n_time_samples": {
+          "description": "Number of time samples used for validation.",
+          "type": "integer",
+          "minimum": 2
+        },
+        "test_states": {
+          "description": "List of custom test states for validation.",
+          "type": "array",
+          "items": {
+            "description": "Test state for validation.",
+            "type": "array",
+            "items": {
+              "description": "State (abundance) of the given species.",
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "n_random_states": {
+          "description": "Number of random states to use for validation (in addition to any custom test states).",
+          "type": "integer",
+          "minimum": 0
+        },
+        "tolerance_band": {
+          "description": "Tolerance band for the validation of the model. This can be used instead of the confidence interval and sets a lower/upper boundary according to the set percentage.",
+          "type": "number",
+          "minimum": 0
+        },
+        "n_trajectories": {
+          "description": "Number of trajectories to use for validation.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "compute_cv_estimate": {
+          "description": "Boolean flag indicating if the DeepCV estimate should be computed (to potentially save time).",
+          "type": "boolean"
+        },
+        "ssa_with_cv_fraction": {
+          "description": "Fraction of trajectories to use for the 'SSA with DeepCV' analysis.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "compute_is_estimate": {
+          "description": "Boolean flag indicating if the DeepIS estimate should be computed (because it is computationally expensive).",
+          "type": "boolean"
+        },
+        "ssa_with_is_fraction": {
+          "description": "Fraction of trajectories to use for the 'SSA with DeepIS' analysis.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "n_is_samples": {
+          "description": "Number of time samples to use for the DeepIS estimate.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "is_simulation_timeout": {
+          "description": "Timeout in seconds for the DeepIS estimate. As soon as one trajectory exceeds the timeout, the whole simulation type is skipped. If set to null, no timeout is used.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "compute_deep_var_estimates": {
+          "description": "Boolean flag indicating if the DeepPVA/DeepIPA variance estimates should be computed (to potentially save time).",
+          "type": "boolean"
+        },
+        "deep_pva_var_fraction": {
+          "description": "Fraction of trajectories to use for DeepPVA.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "deep_ipa_var_fraction": {
+          "description": "Fraction of trajectories to use for DeepIPA.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "em_validation_needed": {
+          "description": "Boolean flag indicating if EM (ergodic mean) validation is needed.",
+          "type": "boolean"
+        },
+        "erg_t_min": {
+          "description": "Minimum time used for ergodic mean validation.",
+          "type": "number",
+          "minimum": 0
+        },
+        "erg_t_max": {
+          "description": "Maximum time used for ergodic mean validation.",
+          "type": "number",
+          "minimum": 0
+        },
+        "erg_n_trajectories": {
+          "description": "Number of trajectories used for ergodic mean validation.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "conv_t_stop": {
+          "description": "Final time for the convergence simulation.",
+          "type": "number",
+          "minimum": 0
+        },
+        "conv_n_time_samples": {
+          "description": "Number of time samples to use for the convergence simulation (should match the grid spacing for the rest of the analysis, just compute it in your head).",
+          "type": "integer",
+          "minimum": 2
+        },
+        "conv_n_repeats": {
+          "description": "Number of repeats for the convergence simulation (to get a better estimate of the variance). Goes into effect if it is larger than 1.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "conv_test_states": {
+          "description": "List of test states for the convergence simulation. This needs to be a subset of the usual test_states, otherwise they are not analyzed.",
+          "type": "array",
+          "items": {
+            "description": "Test state for the convergence simulation.",
+            "type": "array",
+            "items": {
+              "description": "State (abundance) of the given species.",
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "conv_ref_n_trajectories": {
+          "description": "Number of trajectories to use as a reference for the convergence analysis. This is solely used as a ground truth and usually uses a lot of trajectories.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "conv_ref_trajectory_type": {
+          "description": "Type of the reference trajectories for the convergence analysis.",
+          "type": "string",
+          "enum": [
+            "Exact",
+            "SSA",
+            "SSA+DeepCV",
+            "SSA+DeepIS"
+          ]
+        },
+        "conv_n_trajectories": {
+          "description": "Number of trajectories to use for the convergence analysis. The 'SSA with DeepCV' estimate is based on this.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "conv_ssa_with_cv_fraction": {
+          "description": "Fraction of trajectories to use for the convergence 'SSA with DeepCV' analysis.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "conv_use_exact_cv": {
+          "description": "Use the exact 'SSA with DeepCV' for the convergence analysis.",
+          "type": "boolean"
+        },
+        "conv_ssa_with_is_fraction": {
+          "description": "Fraction of trajectories to use for the convergence 'SSA with DeepIS' analysis.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "analysis_seed",
+        "run_test_state_analysis",
+        "t_stop",
+        "n_time_samples",
+        "test_states",
+        "n_random_states",
+        "tolerance_band",
+        "n_trajectories",
+        "compute_cv_estimate",
+        "ssa_with_cv_fraction",
+        "compute_is_estimate",
+        "ssa_with_is_fraction",
+        "n_is_samples",
+        "is_simulation_timeout",
+        "compute_deep_var_estimates",
+        "deep_pva_var_fraction",
+        "deep_ipa_var_fraction",
+        "em_validation_needed",
+        "erg_t_min",
+        "erg_t_max",
+        "erg_n_trajectories",
+        "conv_t_stop",
+        "conv_n_time_samples",
+        "conv_n_repeats",
+        "conv_test_states",
+        "conv_ref_trajectory_type",
+        "conv_ref_n_trajectories",
+        "conv_n_trajectories",
+        "conv_ssa_with_cv_fraction",
+        "conv_ssa_with_is_fraction"
+      ]
+    },
+    "plotting_config": {
+      "description": "Dictionary for configuring plotting options.",
+      "type": "object",
+      "properties": {
+        "share_panel_y_axes": {
+          "description": "Boolean flag indicating if the y-axes of the panels should be shared (same scaling in each row).",
+          "type": "boolean"
+        },
+        "use_theta_in_labels": {
+          "description": "Boolean flag indicating if theta should be shown in the plots.",
+          "type": "boolean"
+        },
+        "n_plotted_trajectories": {
+          "description": "Number of individual trajectories to plot for the validation plots.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "rescale_trajectory_plots": {
+          "description": "Boolean flag indicating if the trajectory plots should be rescaled to zoom into a specific region on the time axis.",
+          "type": "boolean"
+        },
+        "trajectory_plot_minimum": {
+          "description": "Minimum time for the trajectory plots, only relevant if rescale_trajectory_plots is set to true.",
+          "type": "number",
+          "minimum": 0
+        },
+        "trajectory_plot_maximum": {
+          "description": "Maximum time for the trajectory plots, only relevant if rescale_trajectory_plots is set to true.",
+          "type": "number",
+          "minimum": 0
+        },
+        "plot_estimate_convergence": {
+          "description": "Boolean flag indicating if the estimate convergence should be plotted.",
+          "type": "boolean"
+        },
+        "convergence_plot_samples": {
+          "description": "Number of samples to plot in the convergence plot (spaced logarithmically).",
+          "type": "integer",
+          "minimum": 1
+        },
+        "convergence_plot_maximum": {
+          "description": "Maximum number of samples plotted in the convergence plot (must be lower than the number of samples simulated for all plotted methods).",
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "share_panel_y_axes",
+        "use_theta_in_labels",
+        "n_plotted_trajectories",
+        "rescale_trajectory_plots",
+        "trajectory_plot_minimum",
+        "trajectory_plot_maximum",
+        "plot_estimate_convergence",
+        "convergence_plot_samples",
+        "convergence_plot_maximum"
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "reaction_network_config",
+    "neural_network_config",
+    "validation_config",
+    "plotting_config"
+  ]
+}

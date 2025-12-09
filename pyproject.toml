@@ -1,0 +1,46 @@
+[project]
+name = "deep-ska"
+version = "0.1.0"
+description = "DeepSKA provides SDnet, a spectral-decomposition neural architecture, together with DLMC estimators for fast and reliable inference in stochastic reaction networks."
+readme = "README.md"
+authors = [
+    { name = "Arthur", email = "arthur.theuer@outlook.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "matplotlib>=3.10.3",
+    "numpy>=2.2.6",
+    "pyyaml>=6.0.2",
+    "ruamel-yaml>=0.18.14",
+    "scipy>=1.15.3",
+    "torch>=2.7.0",
+    "tqdm>=4.67.1",
+]
+
+[project.scripts]
+deep-ska = "deep_ska.main:cli"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+lint.select = ["B", "I", "UP", "N", "D", "ARG", "ANN", "T20", "F"]
+lint.ignore = ["N802", "N806"]
+
+[tool.ruff.format]
+preview = true
+docstring-code-format = true
+
+[tool.ruff.lint.isort]
+known-first-party = ["deep_ska"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.11.10",
+]

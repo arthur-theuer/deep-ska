@@ -1,0 +1,173 @@
+reaction_network_config:
+  # Directories:
+  trajectories_dir: "./trajectories"
+  results_dir: "./results"
+  # Reaction network settings:
+  reaction_network: "SensorBasedAntitheticIntegralController"
+  reaction_network_abbreviation: "sAIC"
+  parameter_dict:
+    "activation rate": 5
+    "Hill constant den": 0.5
+    "Hill coefficient": 1
+    "basal rate": 10
+    "translation rate": 2
+    "mRNA degradation rate": 5
+    "protein degradation rate": 0.5
+    "theta": 1
+    "eta": 100
+    "mu": 10
+  out_species_labels: ["protein"]
+  output_function: "monomials"
+  output_function_arguments:
+    monomial_orders: [1, 2]
+  exact_values_computable: false
+  sel_param_labels:
+    - "activation rate"
+    - "Hill constant den"
+    - "Hill coefficient"
+    - "basal rate"
+    - "translation rate"
+    - "mRNA degradation rate"
+    - "protein degradation rate"
+    - "theta"
+    - "eta"
+    - "mu"
+  # Reaction network hyperparameters:
+  t_stop: 20
+  n_time_samples: 1001
+  init_type: "uniform"
+  lower_bound: 0
+  upper_bound: 10
+
+neural_network_config:
+  training_seed: 942358723587511010765893012378091247004
+  torch_seed: 9823587235875110107
+  use_previous_training_weights: false
+  trained_model_timestamp: null
+  trained_model_path: "pretrained_models/sAIC_pretrained_weights.pth"
+  training_history_path: "pretrained_models/sAIC_training_history.json"
+  model_training_needed: false
+
+  v:  # V-specific parameters:
+    as_relationship: "identity"
+    erg_t_min: 100
+    erg_t_max: 100000
+    erg_n_trajectories: 5
+    # FORWARD PASS SETTINGS:
+    single_pred_term: false
+    exact_time_derivative: false
+    square_pinn_once: false
+    # TRAINING SETTINGS:
+    loss_function: "identity_loss"
+    loss_component_weights: [1, 1]
+    adaptive_weights: false
+    update_rate: 0.1
+    normalization: "mean_std_batch"
+    inner_loss: "huber"
+    inner_loss_change_index: 1000
+    # Early stopping settings:
+    use_early_stopping: true
+    use_analysis_subnet_for_early_stopping: true
+    early_stopping_batch_size: 10000
+    early_stopping_threshold: 0.05
+    early_stopping_count: 5
+    early_stopping_fraction: 0.95
+    # MISCELLANEOUS SETTINGS:
+    use_exact_eigenfunctions: false
+    only_train_func_dependence: false
+    # SUBNET SETTINGS:
+    forward_subnets: "distinct"
+    analysis_subnets: "distinct"
+    subnet_architecture: "spectral_complex"
+    # Temporal features settings:
+    n_temporal_features: 12
+    # Spectral decomposition settings:
+    n_spectral_terms: 12
+    stationary_mean_initialization: "estimate"
+    decay_modes_initialization: "rand"
+    decay_modes_real: []
+    decay_modes_imag: []
+    pairing_mode: "unconstrained"
+
+  # TRAJECTORY SETTINGS:
+  train_samples_needed: true
+  valid_samples_needed: true
+  use_ssa_samples: true
+  resample_during_training: false
+  resampling_frequency: 50
+  train_size: 5
+  valid_size: 5
+  save_train_data: false
+  save_valid_data: false
+  # DeepIS resampling settings:
+  use_is_resampling: false
+  is_resampling_start: 1000
+  is_resampling_frequency: 500
+  is_resampling_train_size: 20000
+  is_resampling_valid_size: 10000
+  # TRAINING SETTINGS:
+  lr: 0.01
+  lr_scheduler: "cosine"
+  n_steps: 10000
+  use_mini_batches: true
+  use_full_length_trajectories: false
+  mini_batch_size: 10000
+  backward_frequency: 10
+  logging_frequency: 50
+  # SUBNET SETTINGS:
+  n_nodes_per_layer: 24
+  n_hidden_layers: 2
+
+validation_config:
+  analysis_seed: 982358723587511010765893012378091247004
+  run_test_state_analysis: true
+  # Reaction network settings:
+  t_stop: 60
+  test_states: [[0, 0, 0, 0], [10, 1, 14, 0], [1, 7, 0, 29], [6, 13, 1, 29], [12, 18, 3, 0]]
+  n_random_states: 0
+  # General simulation settings:
+  n_time_samples: 3001
+  tolerance_band: 0.05
+  # SSA simulation settings:
+  n_trajectories: 50000
+  # SSA with DeepCV settings:
+  compute_cv_estimate: true
+  ssa_with_cv_fraction: 0.004
+  # SSA with DeepIS settings:
+  compute_is_estimate: true
+  ssa_with_is_fraction: 0.004
+  n_is_samples: 121
+  is_simulation_timeout: null
+  # DeepPVA/DeepIPA variance settings:
+  compute_deep_var_estimates: true
+  deep_pva_var_fraction: 1
+  deep_ipa_var_fraction: 0.01
+  # EM simulation settings:
+  em_validation_needed: true
+  erg_t_min: 100
+  erg_t_max: 1000
+  erg_n_trajectories: 5
+  # Convergence settings:
+  conv_t_stop: 5
+  conv_n_time_samples: 251
+  conv_n_repeats: 10
+  conv_test_states: []
+  conv_ref_trajectory_type: "SSA+DeepCV"
+  conv_ref_n_trajectories: 100000
+  conv_n_trajectories: 1000
+  conv_ssa_with_cv_fraction: 1
+  conv_use_exact_cv: true
+  conv_ssa_with_is_fraction: 1
+
+plotting_config:
+  share_panel_y_axes: false
+  use_theta_in_labels: false
+  # Trajectory plot settings:
+  n_plotted_trajectories: 5
+  rescale_trajectory_plots: true
+  trajectory_plot_minimum: 58
+  trajectory_plot_maximum: 60
+  # Convergence plot settings:
+  plot_estimate_convergence: true
+  convergence_plot_samples: 10
+  convergence_plot_maximum: 1000

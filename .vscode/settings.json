@@ -1,0 +1,5 @@
+{
+  "yaml.schemas": {
+    "src/deep_ska/config/schema.json": "**/*.ska.yaml"
+  }
+}
